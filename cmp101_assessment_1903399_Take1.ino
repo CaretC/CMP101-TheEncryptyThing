@@ -49,6 +49,7 @@ bool MODE_CONFIRMED = false;
 bool BUTTON_LAST_STATE = false;
 bool ENCRYPT_MODE = false;
 bool FIRST_RUN = true;
+bool TEST_MODE = false;
 
 // OLED
 // ----
@@ -85,7 +86,7 @@ byte UNLOCK_CHAR[] = {
 // GPIO
 // ----
 #define DECODE_LED D4
-#define DECODE_BUTTON D5
+#define DECODE_BUTTON D8
 
 // Analog
 // ------
@@ -148,8 +149,17 @@ void setup() {
   pinMode(DECODE_LED, OUTPUT);
   LEDflashTest(DECODE_LED);
 
+
   // ### Button
   pinMode(DECODE_BUTTON, INPUT);
+  int testButtonState = digitalRead(DECODE_BUTTON);
+  Serial << "Test mode button: " << testButtonState << endl;
+  if(testButtonState == 1){
+    Serial << "TEST MODE ENABLED" << endl;
+    TEST_MODE = true;
+  }
+
+  
   Serial << "GPIO Pin Setup Complete..." << endl;
 
   // SD Card Setup
@@ -199,14 +209,13 @@ void loop() {
       delay(3000);
     }
 
-//    // Clear Buffer
-//    while(Serial.available()){
-//      int inByte = Serial.read();
-//      Serial << "Clear Buffer Char" << endl;
-//    }
      serialRXFlush();
-     Serial << Serial.available() << endl;
-
+     if(TEST_MODE){
+      Serial << endl;
+      Serial << "Serial State: " << Serial.available() << endl;
+      Serial << endl;
+     }
+     
     // Connection Confirmed
     Serial << "Serial Connection Confirmed" << endl;
     LCDConnectionConfirmed();
@@ -245,7 +254,11 @@ void loop() {
     }    
   }
 
-  Serial << Serial.available() << endl;
+  if(TEST_MODE){
+    Serial << endl;
+    Serial << "Serial State: " << Serial.available() << endl;
+    Serial << endl;
+  }  
   
   // Set LED
   if(ENCRYPT_MODE){
@@ -253,12 +266,6 @@ void loop() {
   } else {
     digitalWrite(DECODE_LED, 1);
   }
-
-  // TODO: Fix this it curretly isn't working.
-  while(digitalRead(DECODE_BUTTON) == HIGH){
-    delay(1); // To satify watchdog
-  }
-
   
   if(ENCRYPT_MODE){
     LCDEncryptMode();
@@ -293,7 +300,7 @@ void loop() {
       }
     } 
     
-    // TEST Print Message to Serial
+    // Print Message to Serial
     Serial << "Message is " << inMessage.length() << " chars long." << endl;  
     Serial << endl;
     Serial << "************ IN MESSAGE START ************" << endl;  
@@ -328,14 +335,18 @@ void loop() {
       delay(1); // To keep watchdog happy;
     }
 
-    // TEST display Pot value set
-    Serial << "Potentiometer Value Selected: " << potValue << endl;
-
     // Generate Enc Key
     int encKey = generateEncKey(potValue);
 
-    // TEST Serial print key value;
-    Serial << "Enc Key is: " << encKey << endl;
+    if(TEST_MODE){
+      // TEST display Pot value set
+      Serial << endl;
+      Serial << "Potentiometer Value Selected: " << potValue << endl;
+      Serial << "Enc Key is: " << encKey << endl;
+      Serial << endl;
+    }
+
+    // Display EncyKey on Small OLED
     display.clearDisplay();
     display.setCursor(0,0);
     display << "  Message Encryption" << endl;
@@ -349,7 +360,7 @@ void loop() {
     // Encrypt
     String EncMessage = encryptXOR(inMessage, encKey);
 
-    // TEST serial print encMessage
+    // serial print EncMessage
     Serial << endl;
     Serial << "************ ENCRYPTED MESSAGE START ************" << endl;  
     Serial << EncMessage << endl;
@@ -358,10 +369,18 @@ void loop() {
 
     // Write encMessage to SD
     File encMessageFile;
-    bool overwriteSelect = false;
+    //bool overwriteSelect = false;
+
+    // For test remove encMessage if exists
+    if(TEST_MODE){
+      if(SD.exists("encMessage.txt")){
+        Serial << "TEST MODE removing exisitng encMessage.txt" << endl;
+        SD.remove("encMessage.txt");    
+      }
+    }
+    
     if(SD.exists("encMessage.txt")){
       Serial << "encMessage.txt already exists program on hold..." << endl;
-
       while(1){
         LEDErrFlash(DECODE_LED);
         delay(1); // To keep watchdog happy
@@ -387,6 +406,40 @@ void loop() {
         }
     }
 
+    // TEST MODE Write decKeyFile
+    if(TEST_MODE){
+      Serial << endl;
+      Serial << "TEST MODE WRITTING decKey.txt FILE" << endl;
+      if(SD.exists("decKey.txt")){
+        Serial << "TEST MODE DELETING OLD decKey.txt" << endl;
+        SD.remove("decKey.txt");        
+      }
+
+      File decKeyFile = SD.open("decKey.txt", FILE_WRITE);
+
+      String encKeyStr = String(encKey);
+      
+      for(int i=0; i < encKeyStr.length(); i++){
+          decKeyFile.print(encKeyStr.charAt(i));
+      }
+
+      decKeyFile.close();
+
+      if(SD.exists("decKey.txt")){
+        Serial << "TEST MODE decKey.txt CREATED SUCESSFULLY" << endl;
+        Serial << endl;
+      } else {
+        Serial << "TEST MODE FAILED TO CREATE decKey.txt. Program on hold..." << endl;
+        
+        while(1){
+          LEDErrFlash(DECODE_LED);
+          delay(1); // To keep watchdog happy
+        }
+      }
+        
+      
+    }
+
     // Wait until user is done then clear screen
     Serial << "Encryption DONE. Please take note of encryption key from small screen" << endl;
     Serial << "Press 'Y' when done." << endl;
@@ -402,6 +455,7 @@ void loop() {
           encKey = 0;
           Serial << "encKey and EncMessage DELETED!" << endl;
           Serial << "Restarting Program..." << endl;
+          Serial << endl;
 
           display.clearDisplay();
           display.display();
@@ -475,14 +529,11 @@ void loop() {
       }
     }
 
-
-//    // TEST
-//    decKey = 3219566;
-//    Serial << "TEST FORCING DECKEY to " << decKey << endl;
-
     // TEST
-    Serial << "Dec Key is: " << decKey << endl;
-
+    if(TEST_MODE){
+      Serial << "Dec Key is: " << decKey << endl;
+    }
+    
     // Display Dec Key used
     display.clearDisplay();
     display.setCursor(0,0);
@@ -552,13 +603,11 @@ void loop() {
           display.display();
         }         
       }
-    }
-
-        
+    }       
   }
 
    
-  delay(7000); // TESTING USE ONLY
+  delay(5000); // TESTING USE ONLY
   // Encode or Decode serial? > LED to confirm > button to move on
 
   // Encode
@@ -750,7 +799,9 @@ void SerialPrintWelcome(){
 void serialRXFlush(){
   while(Serial.available() > 0){
     int inByte = Serial.read();
-    Serial << "Clear Buffer Char" << endl;
+    if(TEST_MODE){
+      Serial << "Clear Buffer Char" << endl;
+    }    
   }
 }  
 
