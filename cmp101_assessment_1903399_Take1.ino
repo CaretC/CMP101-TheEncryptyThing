@@ -155,16 +155,20 @@ void setup() {
   // SD Card Setup
   // -------------
   Serial << "Initializing SD Card ..." << endl;
-  if(SD.begin(0)){
+  if(!SD.begin(0)){
     Serial << "SD Initialization Failed" << endl;
-    while(1); // Hold Here Forever
+    while(1){
+      delay(1); // Hold Here Forever
+    }
   } else {
     Serial << "Testing SD Card ..." << endl;
     if(SDcardTest()){
       Serial << "SD Card Test Passed" << endl;
     } else {
       Serial << "SD Card Test Failed" << endl;
-      while(1); // Hold Here Forever
+      while(1){
+        delay(1); // Hold Here Forever
+      }
     }    
   }
 
@@ -257,36 +261,45 @@ void loop() {
   if(ENCRYPT_MODE){
     LCDEncryptMode();
     Serial << "ENCRYPT MODE SELECTED" << endl;
-
-    // TODO: Get message to encrypt;
-//    serialRXFlush();
-//    Serial << "Please enter the message you would like to encrypt below:" << endl;
-//    bool isValidMessage = false;
+    Serial << "Would you like to encrypt inMessage.txt? Press 'Y' to encrypt:" << endl;
+    bool encCont = false;
     String inMessage = "Hello World";
 
-//    while(!isValidMessage){
-//      if(Serial.available() > 0){
-//        char inChar = Serial.read();
-//
-//        if(inChar != '\r' || inChar != '\n'){
-//          inMessage += inChar;
-//        } else {
-//          Serial << "End" << endl; // Do nothing
-//          isValidMessage = true;
-//        }
-//      }
-//    } 
+    while(!encCont){
+      if(Serial.available() > 0){
+        char inChar = Serial.read();
 
-      Serial << "Message is " << inMessage.length() << " chars long." << endl;
-      // TEST
-      Serial << inMessage << endl;
+        if(inChar == 'Y' || inChar == 'y'){
+          encCont = true;
+        }         
+      }
+    }
+
+    // Read in Data From SD Card
+    if(SD.exists("inMessage.txt")){
+      File messageFile = SD.open("inMessage.txt");
+      while(messageFile.available()){
+        inMessage += messageFile.readStringUntil('\n');
+        inMessage += '\n';
+      }
+      messageFile.close();
+    } else {
+      Serial << "inMessage.txt not found. Please check and restart..." << endl;
+      while(1){
+        delay(1);
+      }
+    } 
     
-    // TODO: Generate Key from pot, & random number
+    // TEST Print Message to Serial
+    Serial << "Message is " << inMessage.length() << " chars long." << endl;    
+    Serial << inMessage << endl;
+    
+    // Read in pot value
     LCDSetPot();
-    Serial << "Set potentiometer value, use small screen. Enter 1 when done:" << endl;
+    Serial << "Set potentiometer value, use small screen. Enter 'Y' when done:" << endl;
     bool potSet = false;
     int potValue = 0;
-    
+
     while(!potSet){
       potValue = analogRead(POT_INPUT);
       display.clearDisplay();
@@ -298,39 +311,170 @@ void loop() {
       if(Serial.available() > 0){
         char inChar = Serial.read();
 
-        if(inChar == '1'){
+        if(inChar == 'Y' || inChar == 'y'){
           potSet = true;
         }
       }      
       delay(1); // To keep watchdog happy;
     }
 
+    // TEST display Pot value set
     Serial << "Pot Value Set to: " << potValue << endl;
 
+    // Generate Enc Key
     int encKey = generateEncKey(potValue);
 
+    // TEST Serial print key value;
     Serial << "Enc Key is: " << encKey << endl;
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display << "  Message Encryption" << endl;
+    display << "  Key" << endl;    
+    display.setTextSize(2);
+    display << endl;
+    display << " " << encKey << endl;
+    display.setTextSize(1);
+    display.display();
     
     // Encrypt
     String EncMessage = encryptXOR(inMessage, encKey);
 
+    // TEST serial print encMessage
     Serial << EncMessage << endl;
+
+    // Write encMessage to SD
+    File encMessageFile;
+    bool overwriteSelect = false;
+    if(SD.exists("encMessage.txt")){
+      Serial << "encMessage.txt already exists program on hold..." << endl;
+
+      while(1){
+        delay(1); // To keep watchdog happy
+      }     
+    } else {
+        encMessageFile = SD.open("encMessage.txt", FILE_WRITE);
+
+        for(int i=0; i < EncMessage.length(); i++){
+          encMessageFile.print(EncMessage.charAt(i));
+        }
+
+        encMessageFile.close();
+
+        if(SD.exists("encMessage.txt")){
+          Serial << "Encrypted file encMessage.txt written successfully..." << endl;
+        } else {
+            Serial << "File write error. Program on hold." << endl;
+
+            while(1){
+              delay(1); // To keep watchdog happy
+            }
+        }
+    }
+    
     
     
     
   } else {
     LCDDecryptMode();
-    serialRXFlush();
     Serial << "DECRYPT MOODE SELECTED" << endl;
 
-    String encMessage = "~T[XXgYC[P";
-    int key = 6174720;
+    Serial << "Would you like to decrypt encMessage.txt? Press 'Y' to decrypt:" << endl;
+    bool decCont = false;
+    String inEncMessage = "";
+    String decMessage = "";
 
-    String decMessage = encryptXOR(encMessage, key);
+    while(!decCont){
+      if(Serial.available() > 0){
+        char inChar = Serial.read();
 
+        if(inChar == 'Y' || inChar == 'y'){
+          decCont = true;
+        }         
+      }
+    }
+
+    // Read in encrypted message from SD
+    if(SD.exists("encMessage.txt")){
+      File encInFile = SD.open("encMessage.txt");
+
+      while(encInFile.available()){
+        inEncMessage += encInFile.readStringUntil('\n');
+        inEncMessage += '\n';
+      }      
+    } else {
+      Serial << "encMessage.txt not found. Program on hold.." << endl;
+      while(1){
+        delay(1); // To keep watchdog happy
+      }
+    }
+
+    // TEST
+    Serial << inEncMessage << endl;
+
+    // read in key from SD
+    String keyReadIn = "";
+    int decKey = 0;
+
+    // Read in encrypted message from SD
+    if(SD.exists("decKey.txt")){
+      File encKeyFile = SD.open("decKey.txt");
+
+      while(encKeyFile.available()){
+        keyReadIn += encKeyFile.readStringUntil('\n');
+      }   
+
+      decKey = keyReadIn.toInt();
+    } else {
+      Serial << "decKey.txt not found. Program on hold.." << endl;
+      while(1){
+        delay(1); // To keep watchdog happy
+      }
+    }
+
+
+//    // TEST
+//    decKey = 3219566;
+//    Serial << "TEST FORCING DECKEY to " << decKey << endl;
+
+    // TEST
+    Serial << "Dec Key is: " << decKey << endl;
+
+    // Decrypt
+    decMessage = encryptXOR(inEncMessage, decKey);
+
+    // TEST
     Serial << decMessage << endl;
-    // TODO: Add encryptXOR()
+
+    // Write decMessage to SD
+    File decMessageFile;
+    //bool overwriteSelect = false;
+    if(SD.exists("decMessage.txt")){
+      Serial << "decMessage.txt already exists program on hold..." << endl;
+
+      while(1){
+        delay(1); // To keep watchdog happy
+      }     
+    } else {
+        decMessageFile = SD.open("decMessage.txt", FILE_WRITE);
+
+        for(int i=0; i < decMessage.length(); i++){
+          decMessageFile.print(decMessage.charAt(i));
+        }
+
+        decMessageFile.close();
+
+        if(SD.exists("decMessage.txt")){
+          Serial << "Decrypted file decMessage.txt written successfully..." << endl;
+        } else {
+            Serial << "File write error. Program on hold." << endl;
+
+            while(1){
+              delay(1); // To keep watchdog happy
+            }
+          }    
+        }
   }
+
    
   delay(7000); // TESTING USE ONLY
   // Encode or Decode serial? > LED to confirm > button to move on
@@ -367,16 +511,16 @@ void loop() {
 // Simple Test to Confirm SD Card is working
 bool SDcardTest(){
   bool testResult = false;
-
+   SD.begin(0);
   // Check for test file
   if(SD.exists("test.txt")){
-    SD.remove("text.txt");
+    SD.remove("test.txt");
     testResult = true;
   } else {
   File testFile = SD.open("test.txt", FILE_WRITE);
   testFile.close();
   if(SD.exists("test.txt")){
-    SD.remove("text.txt");
+    SD.remove("test.txt");
     testResult = true;
   } else {
     testResult = false;
