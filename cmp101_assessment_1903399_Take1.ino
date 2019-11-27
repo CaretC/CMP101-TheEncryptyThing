@@ -158,6 +158,7 @@ void setup() {
   if(!SD.begin(0)){
     Serial << "SD Initialization Failed" << endl;
     while(1){
+      LEDErrFlash(DECODE_LED);
       delay(1); // Hold Here Forever
     }
   } else {
@@ -167,6 +168,7 @@ void setup() {
     } else {
       Serial << "SD Card Test Failed" << endl;
       while(1){
+        LEDErrFlash(DECODE_LED);
         delay(1); // Hold Here Forever
       }
     }    
@@ -286,6 +288,7 @@ void loop() {
     } else {
       Serial << "inMessage.txt not found. Please check and restart..." << endl;
       while(1){
+        LEDErrFlash(DECODE_LED);
         delay(1);
       }
     } 
@@ -360,6 +363,7 @@ void loop() {
       Serial << "encMessage.txt already exists program on hold..." << endl;
 
       while(1){
+        LEDErrFlash(DECODE_LED);
         delay(1); // To keep watchdog happy
       }     
     } else {
@@ -377,6 +381,7 @@ void loop() {
             Serial << "File write error. Program on hold." << endl;
 
             while(1){
+              LEDErrFlash(DECODE_LED);
               delay(1); // To keep watchdog happy
             }
         }
@@ -437,6 +442,7 @@ void loop() {
     } else {
       Serial << "encMessage.txt not found. Program on hold.." << endl;
       while(1){
+        LEDErrFlash(DECODE_LED);
         delay(1); // To keep watchdog happy
       }
     }
@@ -464,6 +470,7 @@ void loop() {
     } else {
       Serial << "decKey.txt not found. Program on hold.." << endl;
       while(1){
+        LEDErrFlash(DECODE_LED);
         delay(1); // To keep watchdog happy
       }
     }
@@ -504,6 +511,7 @@ void loop() {
       Serial << "decMessage.txt already exists program on hold..." << endl;
 
       while(1){
+        LEDErrFlash(DECODE_LED);
         delay(1); // To keep watchdog happy
       }     
     } else {
@@ -521,6 +529,7 @@ void loop() {
             Serial << "File write error. Program on hold." << endl;
 
             while(1){
+              LEDErrFlash(DECODE_LED);
               delay(1); // To keep watchdog happy
             }
           }    
@@ -603,7 +612,7 @@ bool SDcardTest(){
 
 // Simple Test That Flashes LED
 void LEDflashTest(int LEDpin){
-  int flashDelay = 500;
+  int flashDelay = 900;
   
   digitalWrite(DECODE_LED, 0);
   delay(flashDelay);
@@ -616,6 +625,15 @@ void LEDflashTest(int LEDpin){
   digitalWrite(DECODE_LED, 0);
   delay(flashDelay);
   digitalWrite(DECODE_LED, 1);  
+}
+
+void LEDErrFlash(int LEDpin){
+  int flashDelay = 100;
+  
+  digitalWrite(DECODE_LED, 0);
+  delay(flashDelay);
+  digitalWrite(DECODE_LED, 1);
+  delay(flashDelay);
 }
 
 // LCD
