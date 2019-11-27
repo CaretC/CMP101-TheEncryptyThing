@@ -263,7 +263,7 @@ void loop() {
     Serial << "ENCRYPT MODE SELECTED" << endl;
     Serial << "Would you like to encrypt inMessage.txt? Press 'Y' to encrypt:" << endl;
     bool encCont = false;
-    String inMessage = "Hello World";
+    String inMessage = "";
 
     while(!encCont){
       if(Serial.available() > 0){
@@ -291,8 +291,12 @@ void loop() {
     } 
     
     // TEST Print Message to Serial
-    Serial << "Message is " << inMessage.length() << " chars long." << endl;    
+    Serial << "Message is " << inMessage.length() << " chars long." << endl;  
+    Serial << endl;
+    Serial << "************ IN MESSAGE START ************" << endl;  
     Serial << inMessage << endl;
+    Serial << "************ IN MESSAGE END **************" << endl;  
+    Serial << endl;
     
     // Read in pot value
     LCDSetPot();
@@ -305,7 +309,10 @@ void loop() {
       display.clearDisplay();
       display.setCursor(0,0);
       display << "Potentiometer Value:" << endl;
+      display.setTextSize(3);
+      display << endl;
       display << potValue << endl;
+      display.setTextSize(1);
       display.display();
 
       if(Serial.available() > 0){
@@ -319,7 +326,7 @@ void loop() {
     }
 
     // TEST display Pot value set
-    Serial << "Pot Value Set to: " << potValue << endl;
+    Serial << "Potentiometer Value Selected: " << potValue << endl;
 
     // Generate Enc Key
     int encKey = generateEncKey(potValue);
@@ -340,7 +347,11 @@ void loop() {
     String EncMessage = encryptXOR(inMessage, encKey);
 
     // TEST serial print encMessage
+    Serial << endl;
+    Serial << "************ ENCRYPTED MESSAGE START ************" << endl;  
     Serial << EncMessage << endl;
+    Serial << "************ ENCRYPTED MESSAGE END **************" << endl; 
+    Serial << endl;
 
     // Write encMessage to SD
     File encMessageFile;
@@ -369,6 +380,28 @@ void loop() {
               delay(1); // To keep watchdog happy
             }
         }
+    }
+
+    // Wait until user is done then clear screen
+    Serial << "Encryption DONE. Please take note of encryption key from small screen" << endl;
+    Serial << "Press 'Y' when done." << endl;
+    Serial << "NOTE: KEY IS LOST ONCE 'Y' IS PRESSED. SO BE CAREFUL!" << endl;
+    bool encFinished = false;
+    while(!encFinished){
+      if(Serial.available() > 0){
+        char inChar = Serial.read();
+
+        if(inChar == 'Y' || inChar == 'y'){
+          encFinished = true;
+          EncMessage = "";
+          encKey = 0;
+          Serial << "encKey and EncMessage DELETED!" << endl;
+          Serial << "Restarting Program..." << endl;
+
+          display.clearDisplay();
+          display.display();
+        }         
+      }
     }
     
     
@@ -409,8 +442,12 @@ void loop() {
     }
 
     // TEST
+    Serial << endl;
+    Serial << "************ IN ENCRYPTED MESSAGE START ************" << endl; 
     Serial << inEncMessage << endl;
-
+    Serial << "************ IN ENCRYPTED MESSAGE END **************" << endl; 
+    Serial << endl;
+    
     // read in key from SD
     String keyReadIn = "";
     int decKey = 0;
@@ -439,11 +476,26 @@ void loop() {
     // TEST
     Serial << "Dec Key is: " << decKey << endl;
 
+    // Display Dec Key used
+    display.clearDisplay();
+    display.setCursor(0,0);
+    display << "  Decryption Key" << endl;
+    display << "  Used" << endl;    
+    display.setTextSize(2);
+    display << endl;
+    display << " " << decKey << endl;
+    display.setTextSize(1);
+    display.display();
+
     // Decrypt
     decMessage = encryptXOR(inEncMessage, decKey);
 
     // TEST
+    Serial << endl;
+    Serial << "************ DECRYPTED MESSAGE START ************" << endl; 
     Serial << decMessage << endl;
+    Serial << "************ DECRYPTED MESSAGE END **************" << endl;
+    Serial << endl;
 
     // Write decMessage to SD
     File decMessageFile;
@@ -473,6 +525,27 @@ void loop() {
             }
           }    
         }
+
+    Serial << "Decryption DONE. Press 'Y' when done" << endl;
+    bool decFinished = false;
+    while(!decFinished){
+      if(Serial.available() > 0){
+        char inChar = Serial.read();
+
+        if(inChar == 'Y' || inChar == 'y'){
+          decFinished = true;
+          decMessage = "";
+          decKey = 0;
+          Serial << "decKey and decMessage DELETED!" << endl;
+          Serial << "Restarting Program..." << endl;
+
+          display.clearDisplay();
+          display.display();
+        }         
+      }
+    }
+
+        
   }
 
    
