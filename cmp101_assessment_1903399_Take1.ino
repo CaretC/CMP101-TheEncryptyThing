@@ -174,7 +174,7 @@ void setup() {
   } else {
     Serial << "Testing SD Card ..." << endl;
     if(SDcardTest()){
-      Serial << "SD Card Test Passed" << endl;
+      Serial << "SD Card Test Passed..." << endl;
     } else {
       Serial << "SD Card Test Failed" << endl;
       while(1){
@@ -183,6 +183,20 @@ void setup() {
       }
     }    
   }
+
+  // RTC
+  // ---
+  Serial << "Testing RTC..." << endl;
+  if(RTCTest()){
+    Serial << "RTC Test Passed..." << endl;
+  } else {
+    Serial << "RTC Test Failed" << endl;
+    while(1){
+      LEDErrFlash(DECODE_LED);
+      delay(1); // To keep watchdog happy
+    }
+  }
+  
 
   // Setup Finished Messages
   Serial << "System Setup Finished..." << endl;
@@ -356,9 +370,12 @@ void loop() {
     display << " " << encKey << endl;
     display.setTextSize(1);
     display.display();
+
+    // Add Encryption Header to inMessage
+    String fullInMessage = fileHeader(ENCRYPT_MODE) + inMessage;
     
     // Encrypt
-    String EncMessage = encryptXOR(inMessage, encKey);
+    String EncMessage = encryptXOR(fullInMessage, encKey);
 
     // serial print EncMessage
     Serial << endl;
@@ -369,7 +386,6 @@ void loop() {
 
     // Write encMessage to SD
     File encMessageFile;
-    //bool overwriteSelect = false;
 
     // For test remove encMessage if exists
     if(TEST_MODE){
@@ -387,7 +403,7 @@ void loop() {
       }     
     } else {
         encMessageFile = SD.open("encMessage.txt", FILE_WRITE);
-
+        
         for(int i=0; i < EncMessage.length(); i++){
           encMessageFile.print(EncMessage.charAt(i));
         }
@@ -409,10 +425,10 @@ void loop() {
     // TEST MODE Write decKeyFile
     if(TEST_MODE){
       Serial << endl;
-      Serial << "TEST MODE WRITTING decKey.txt FILE" << endl;
-      if(SD.exists("decKey.txt")){
-        Serial << "TEST MODE DELETING OLD decKey.txt" << endl;
-        SD.remove("decKey.txt");        
+      Serial << "TEST MODE - Overwritting existing decKey.txt..." << endl;
+      if(SD.exists("decKey.txt")){        
+        SD.remove("decKey.txt");     
+        Serial << "TEST MODE - Deleted existing decKey.txt..." << endl;   
       }
 
       File decKeyFile = SD.open("decKey.txt", FILE_WRITE);
@@ -555,9 +571,18 @@ void loop() {
     Serial << "************ DECRYPTED MESSAGE END **************" << endl;
     Serial << endl;
 
+    // TEST MODE Write decMessage
+    if(TEST_MODE){
+      Serial << endl;
+      Serial << "TEST MODE - Preparing to write decMessage.txt..." << endl;
+      if(SD.exists("decMessage.txt")){        
+        SD.remove("decMessage.txt");     
+        Serial << "TEST MODE - Deleted existing decMessage.txt..." << endl;   
+      }
+    }
+    
     // Write decMessage to SD
     File decMessageFile;
-    //bool overwriteSelect = false;
     if(SD.exists("decMessage.txt")){
       Serial << "decMessage.txt already exists program on hold..." << endl;
 
@@ -568,6 +593,8 @@ void loop() {
     } else {
         decMessageFile = SD.open("decMessage.txt", FILE_WRITE);
 
+        decMessageFile.print(fileHeader(ENCRYPT_MODE));
+        
         for(int i=0; i < decMessage.length(); i++){
           decMessageFile.print(decMessage.charAt(i));
         }
@@ -607,33 +634,7 @@ void loop() {
   }
 
    
-  delay(5000); // TESTING USE ONLY
-  // Encode or Decode serial? > LED to confirm > button to move on
-
-  // Encode
-  // ------
-  // * User Inputs Message > Save in GLOBAL?
-  // * Generate Key > int generateKey() > encKey > User uses pot to set? + random()
-  // * Encrypt message > string encryptXOR(encKey) > encMessage
-  // * Save encMessage to file > file name "encMessage<RTCtime><date>.txt"
-  // * Confirm file has been created
-  // * Display key on the small screen for 60sec? > LCD & Serial Prompt user to take note. (super nice to have QR code)
-  // * Clear little screen and forget key
-  // * Back to start of programme
-
-  // Decode
-  // ------
-  // * User Inputs file name
-  // * Check file exists
-  // * IF file exists then get user to enter key
-  // * XOR message with the decryptXOR(encKey) > decMessage
-  // * Select safe decrypt mode or destructive. Safe dosn't delete message file, it creates a new one to decMessage
-  // * Decode and write to a file > file name "decMessage<RTCtime><date>.txt"
-  // * Confirm file has been created
-  // * IF ! safe mode delete original file.
-  // * back to start of program
-
-  
+  delay(5000); // Restart Delay  
 }
 
 // ========== Functions ==========================
@@ -824,6 +825,43 @@ String serialRecieveString(){
   return rxString;
 }
 
+// Print Encyption Header in file
+String fileHeader(bool isEncryptMode){
+  // Get the date and time from RTC
+  bool Flag24Hr = true;
+  bool FlagAmPm;
+  bool Century;
+  int timeHour = rtc.getHour(Flag24Hr, FlagAmPm);
+  int timeMin = rtc.getMinute();
+  int timeSec = rtc.getSecond();
+  int dateDay = rtc.getDate();
+  int dateMonth = rtc.getMonth(Century);
+  int dateYear = rtc.getYear();
+
+  String TestUser = "Joseph Lee";
+  String userString = "";
+  if(isEncryptMode){
+    userString = "            Encrypted by " + TestUser;
+  } else {
+    userString = "            Decrypted by " + TestUser;
+  }
+  String DateString = "            At " + String(timeHour) + ":" + String(timeMin) + ":" +
+    String(timeSec) + " on " + String(dateDay) + "/" + String(dateMonth) + "/" + String(dateYear);
+  String starLine = "****************************************************\n";
+  String headMessage = "";
+
+  if(isEncryptMode){
+    headMessage = "This File Was Encrypted Using The Encrypty Thing\n";
+  } else {
+    headMessage = "This File Was Decrypted Using The Encrypty Thing\n";
+  }
+  
+
+  String fullHeader = starLine + headMessage + userString + "\n" + DateString + "\n" + starLine +"\n\n";
+    
+  return fullHeader;         
+}
+
 // Encryption
 // ----------
 // Generate a key
@@ -856,4 +894,20 @@ String encryptXOR(String message, int key){
   }
 
   return encMessage;
+}
+
+// RTC
+// ---
+bool RTCTest(){
+  bool testPassed = false;
+  int rtcData = rtc.getMinute();
+
+  if(TEST_MODE){
+    Serial << "TEST MODE - Test RTC Data: " << rtcData << endl;
+  }
+  
+  if(rtcData >= 0 && rtcData <=60){
+    testPassed = true;
+  }  
+  return testPassed;
 }
