@@ -20,6 +20,88 @@
  then the key, the key is cycled. For more information on how to use this 
  device for code implementaion please consult README.
  *****************************************************************************/
+ 
+ // ========= Harware Connections ========
+ // This section shows a sumamry of the hardwar connection required for device
+
+ // Wemos Board
+ //------------
+// | Wemos Board | Cable Colour | Breadboard |
+// |:-----------:|:------------:|:----------:|
+// | `D1/SCL`    | BROWN        | `H22`      |
+// | `D2/SDA`    | RED          | `H21`      |
+// | `D5/SCK`    | GREY         | `B10`      |
+// | `D6/MISO`   | WHITE        | `B12`      |
+// | `D7/MOSI`   | BLACK        | `B11`      |
+// | `D8/SS`     | YELLOW       | `J24`      |
+// | `D4`        | RED          | `J25`      |
+// | `A0`        | PURPLE       | `E25`      |
+
+// LCD Screen
+// ----------
+// | LCD Board   | Cable Colour | Breadboard |
+// |:-----------:|:------------:|:----------:|
+// | `GND`       | GREY         | `GND Rail` |
+// | `Vcc` (+5V) | RED          | `+5V Rail` |
+// | `SDA`       | BLACK        | `J21`      |
+// | `SCL`       | BROWN        | `J22`      |
+
+// OLED Screen
+// -----------
+// | OLED Board    | Breadboard |
+// |:-------------:|:----------:|
+// | `SDA`         | `J9`       |
+// | `SCL`         | `J10`      |
+// | `Vcc` (+3.3V) | `J11`      |
+// | `GND`         | `J12`      |
+// | `D7/MOSI`     | `B11`      |
+
+// SD Card Module
+// --------------
+// | SD Module   | Cable Colour | Breadboard |
+// |:-----------:|:------------:|:----------:|
+// | `GND`       | ORANGE       | `A14`      |
+// | `Vcc` (+5V) | RED          | `A13`      |
+// | `MISO`      | BROWN        | `A12`      |
+// | `MOSI`      | BLACK        | `A11`      |
+// | `SCK`       | YELLOW       | `A10`      |
+
+// RTC DS3231
+// ----------
+// | RTC Board     | Breadboard |
+// |:-------------:|:----------:|
+// | `32K`         | `B23`      |
+// | `SQW`         | `B22`      |
+// | `SCL`         | `B21`      |
+// | `SDA`         | `B20`      |
+// | `Vcc` (+3.3V) | `B19`      |
+// | `GND`         | `B18`      |
+
+// Potentiometer
+// -------------
+// | Potentiometer          | Breadboard |
+// |:----------------------:|:----------:|
+// | `GND` - RH Pin         | `B23`      |
+// | `Signal` - Mid Pin     | `B22`      |
+// | `Vcc` (+3.3V) - LH Pin | `B21`      |
+
+// LED
+// ---
+// | LED    | Breadboard |
+// |:------:|:--------- :|
+// | `-Ve`  | `J1`       |
+// | `+Ve`  | `+5V Rail` | 
+
+// Breadboard Cabling
+// ------------------
+// | Cable Colour  | Function                   |
+// |:-------------:|:--------------------------:|
+// | GREY          | I2C Data/ Clock            |
+// | PURPLE        | +3.3V                      |
+// | BLACK         | GND                        |
+// | ORANGE        | +5V                        |
+// | GREEN         | GPIO Pins Input and Output |
+// | PINK          | Analog Input               |
 
 // ========== Includes ====================
 // General
