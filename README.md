@@ -184,7 +184,7 @@ Instructions on device use are shown below:
 * It will then carry out its set up and tests, this might take a few seconds. Status LED will also blink 3 times in these tests.
 * If all tests and setup passed the device will display welcome message on LCD screen. Shown below:
 
-![LCD Welcome Message](ReadmeImages/LcdWelcomeScreen.PNG)
+![LCD Welcome Message](ReadmeImages/LcdWelcomeScreen.png)
 
 * User will then be prompted to open serial monitor and enter any key to confirm connection. Message shown below:
 
