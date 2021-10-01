@@ -81,7 +81,7 @@ The major components of the system are shown below:
 
 ![Main Ccomponents Image](ReadmeImages/TheEncryptyThingComponents.png)
 
-![Breadboard Components Image](ReadmeImages/BreadBoardComponents.PNG)
+![Breadboard Components Image](ReadmeImages/BreadBoardComponents.png)
 
 Hardware Connections
 --------------------
@@ -156,7 +156,7 @@ referance.
 ### LED
 
 | LED    | Breadboard |
-|:------:|:--------- :|
+|:------:|:----------:|
 | `-Ve`  | `J1`       |
 | `+Ve`  | `+5V Rail` | 
 
@@ -183,27 +183,40 @@ Instructions on device use are shown below:
 * Plug in USB and the device should power up.
 * It will then carry out its set up and tests, this might take a few seconds. Status LED will also blink 3 times in these tests.
 * If all tests and setup passed the device will display welcome message on LCD screen. Shown below:
+
 ![LCD Welcome Message](ReadmeImages/LcdWelcomeScreen.PNG)
+
 * User will then be prompted to open serial monitor and enter any key to confirm connection. Message shown below:
+
 ![LCD Serial Prompt](ReadmeImages/LcdSerialPrompt.PNG)
+
 * Connection will then be confirmed. Message shown below:
+
 ![LCD Connection Confirmed](ReadmeImages/LcdSerialConfirmed.PNG)
+
 * User will then be prompted to enter the mode require via the serial monitor. `E` for Encrypt and `D` for Decrypt.
+
 ![LCD Mode Select](ReadmeImages/LcdSelectMode.PNG)
 
 
 ### Encrypt
 
 * Encrypt Mode will display on LCD. Message shown below:
+
 ![LCD Encrypt Mode](ReadmeImages/LcdEncryptMode.PNG)
+
 * Status LED will be **ON** in Encrypt Mode.
 * User is prompted if they want to continue to encrypt `inMessage.txt`. Press `Y` to continue.
 * `inMessage.txt` summary will be displayed on serial monitor.
 * User is prompted to set potentiometer value and enter `Y` when done. OLED screen example below:
+
 ![OLDE Pot Value](ReadmeImages/OledPotValue.PNG)
+
 * Encrypted message summary will then be shown on serial monitor.
 * Encryption key will be displayed on the OLED, for user to take note of. OLED example below:
+
 ![OLDE Encrypt Key](ReadmeImages/OledEncKey.PNG)
+
 * Encrypted message is then written to `encMessage.txt`.
 * User is then asked to take note of encryption key and press `Y` when done to return to select mode.
 
@@ -211,13 +224,17 @@ Instructions on device use are shown below:
 ### Decrypt
 
 * Decrypt Mode will display on LCD:
+
 ![LCD Encrypt Mode](ReadmeImages/LcdDecryptMode.PNG)
+
 * Status LED will be **OFF** in Decrypt Mode.
 * User is prompted if they want to continue to decrypt `encMessage.txt` using `key.txt`. Press `Y` to continue.
 * Messgae summary and decrypted message will be printed to the serial monitor.
 * Decrypted message `decMessage.txt` is then written to the SD card.
 * The decryption key used is displayed on the OLED for user's referance. OLED example shown below:
+
 ![OLDE Decrypt Key](ReadmeImages/OledDecKey.PNG)
+
 * User is then asked to press `Y` when done to return to select mode.
 
 Errors
@@ -262,7 +279,9 @@ Test Mode also prints additional information to the serial monitor to assist wit
 
 To activate Test Mode:
 * Press Wemos  `Rest Button` and wait until Adafruit screen displays on OLED. Shown below:
+
 ![OLDE Adafruit](ReadmeImages/OledArdaFruit.PNG)
+
 * Then press and hold `Test Mode Button` at the center of the breadboard.
 * Hold this until the welcome message prints on the LCD. 
 * Serial monitor should print confirmation of Test Mode activation in setup messgaes. 
@@ -315,6 +334,7 @@ The following libraries are used in this project:
 #### Custom Lock Char
 
 The custom character used for the lock image on the Encrypt Mode LCD screen. Shown below:
+
 ![Custom Lock Char](ReadmeImages/LockChar.PNG)
 
 Is stored in the global byte array `LOCK_CHAR`:
@@ -334,6 +354,7 @@ byte LOCK_CHAR[] = {
 #### Custom Lock Char
 
 The custom character used for the unlock image on the Decrypt Mode LCD screen. Shown below:
+
 ![Custom Unlock Char](ReadmeImages/UnlockChar.PNG)
 
 Is stored in the global byte array `UNLOCK_CHAR`:
@@ -1074,6 +1095,7 @@ void LEDErrFlash(int LEDpin){
 #### LCDPrintWelcome()
 
 The `LCDPrintWelcome` function prints the welcome message to the LCD. Shown below:
+
 ![LCD Welcome Message](ReadmeImages/LcdWelcomeScreen.PNG)
 
 ```cpp
